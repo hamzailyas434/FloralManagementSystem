@@ -84,9 +84,7 @@ import { AuthService } from '../../services/auth.service';
           </button>
         </form>
 
-        <div class="auth-footer">
-          <p>Already have an account? <a routerLink="/login">Sign in</a></p>
-        </div>
+        <!-- Hidden signup page - accessible only via direct URL -->
       </div>
     </div>
   `,
