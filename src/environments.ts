@@ -1,0 +1,4 @@
+export const environment = {
+  supabaseUrl: 'https://ttohwauryneywdvhstim.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0b2h3YXVyeW5leXdkdmhzdGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNjU1NjMsImV4cCI6MjA3OTc0MTU2M30.kxxBso5KIKin5OTg63Q47fbq4oQux_pMagWrZGcmbNQ'
+};

@@ -1,0 +1,401 @@
+═══════════════════════════════════════════════════════════════════
+  FLORAL MANAGEMENT SYSTEM - AI CONVERSION PROMPT
+  Copy this entire prompt to ChatGPT, Claude, or any AI assistant
+═══════════════════════════════════════════════════════════════════
+
+I need to convert a Floral Management System from Angular 20 + Supabase to [MEAN/MERN/Next.js] stack.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 CURRENT SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Frontend: Angular 20 (Standalone Components)
+Backend: Supabase (PostgreSQL + Auto REST API)
+Features: Customer Management, Order Management, Expense Tracking, Sales, Analytics Dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 TARGET STACK (Choose one)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option 1 - MEAN Stack:
+  Frontend: Angular 17+
+  Backend: Node.js + Express.js
+  Database: MongoDB
+  Auth: JWT
+
+Option 2 - MERN Stack:
+  Frontend: React 18+
+  Backend: Node.js + Express.js
+  Database: MongoDB
+  Auth: JWT
+
+Option 3 - Next.js Full-Stack:
+  Framework: Next.js 14+ (App Router)
+  Database: PostgreSQL with Prisma
+  Auth: NextAuth.js
+
+Option 4 - NestJS + Angular:
+  Frontend: Angular 17+
+  Backend: NestJS
+  Database: PostgreSQL with TypeORM
+  Auth: Passport.js
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗄️ DATABASE SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CUSTOMERS
+   - id (uuid/ObjectId)
+   - name (string, required)
+   - phone (string, unique)
+   - email (string, unique)
+   - country (string)
+   - city (string)
+   - address (string)
+   - created_at (timestamp)
+
+2. ORDERS
+   - id (uuid/ObjectId)
+   - order_number (string, unique, required)
+   - customer_id (reference to customers)
+   - order_date (date, default: today)
+   - order_type (enum: "Customer Order" | "Sale")
+   - order_status (enum: "Received" | "In Progress" | "Ready" | "Delivered")
+   - tracking_id (string)
+   - total_amount (decimal/number)
+   - payment_status (enum: "Full Payment" | "Half Payment" | "Remaining")
+   - amount_paid (decimal/number)
+   - amount_remaining (decimal/number)
+   - created_at (timestamp)
+   - updated_at (timestamp)
+
+3. ORDER_ITEMS
+   - id (uuid/ObjectId)
+   - order_id (reference to orders, cascade delete)
+   - product_type (string, required)
+   - quantity (integer, required)
+   - price (decimal/number)
+   - fabric_details (string)
+   - dye_color (array of strings)
+   - sku_code (string)
+   - sale_id (string)
+   - created_at (timestamp)
+
+4. DELIVERY_COSTS
+   - id (uuid/ObjectId)
+   - order_id (reference to orders, cascade delete)
+   - delivery_type (enum: "National" | "International")
+   - delivery_cost (decimal/number)
+   - customer_charge (decimal/number)
+   - added_to_order (boolean, default: false)
+   - created_at (timestamp)
+
+5. EXPENSES
+   - id (uuid/ObjectId)
+   - expense_date (date, default: today)
+   - expense_type (enum: "Material" | "Making" | "Delivery" | "General Overhead")
+   - description (string, required)
+   - cost (decimal/number, required)
+   - related_order_id (reference to orders, nullable)
+   - created_at (timestamp)
+
+6. SALES
+   - id (uuid/ObjectId)
+   - sale_number (string)
+   - sales_name (string)
+   - sale_date (date, default: today)
+   - customer_id (reference to customers, nullable)
+   - total_items (integer)
+   - notes (string)
+   - created_at (timestamp)
+   - updated_at (timestamp)
+
+7. SALE_ITEMS
+   - id (uuid/ObjectId)
+   - sale_id (reference to sales, cascade delete)
+   - sku_code (string, required)
+   - quantity (integer, required)
+   - created_at (timestamp)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✨ REQUIRED FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CUSTOMER MANAGEMENT
+   ✓ List all customers with search
+   ✓ Create new customer
+   ✓ Update customer details
+   ✓ Delete customer
+   ✓ View customer order history
+
+2. ORDER MANAGEMENT
+   ✓ Create orders (two types: Custom Order or Sale)
+   ✓ Auto-generate sequential order numbers (starting from 6000)
+   ✓ Add multiple order items with specifications
+   ✓ Track payment status (Full/Half/Remaining)
+   ✓ Update order status workflow (Received → In Progress → Ready → Delivered)
+   ✓ Add delivery costs and tracking ID
+   ✓ View order details with all relations
+
+3. EXPENSE TRACKING
+   ✓ Record expenses by type
+   ✓ Link expenses to specific orders (optional)
+   ✓ Filter expenses by date range
+   ✓ Calculate total expenses
+
+4. SALES MANAGEMENT
+   ✓ Create sales with SKU items
+   ✓ Track inventory sales separately from custom orders
+   ✓ Auto-generate sale numbers
+
+5. ANALYTICS DASHBOARD
+   ✓ Total Revenue (sum of all order amounts)
+   ✓ Total Expenses (sum of all expenses)
+   ✓ Net Profit (Revenue - Expenses)
+   ✓ Pending Amount (sum of amount_remaining)
+   ✓ Active Orders count (orders not delivered)
+   ✓ Total Customers count
+   ✓ Customer Orders vs Sale Orders count
+
+   Charts:
+   ✓ Order Type Distribution (Doughnut)
+   ✓ Order Status Distribution (Doughnut)
+   ✓ Payment Status Distribution (Doughnut)
+   ✓ Revenue vs Expenses (Bar Chart - Monthly)
+   ✓ Monthly Orders Trend (Line Chart)
+
+6. INVOICE GENERATION
+   ✓ Generate PDF invoices for orders
+   ✓ Include customer details, order items, pricing, payment status
+   ✓ Print functionality
+
+7. DATA EXPORT
+   ✓ Export orders to Excel, PDF, CSV
+   ✓ DataTables with search, sort, pagination
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ BUSINESS LOGIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Order Number Generation:
+   - Sequential numbering starting from 6000
+   - Auto-increment based on last order number
+   - Logic: Get max order_number, add 1, or start at 6000 if none exist
+
+2. Payment Calculation:
+   - amount_remaining = total_amount - amount_paid
+   - Auto-calculate on every update
+
+3. Payment Status Logic:
+   - "Full Payment": amount_remaining = 0
+   - "Half Payment": amount_paid >= 50% of total_amount
+   - "Remaining": amount_paid < 50% of total_amount
+
+4. Delivery Cost:
+   - Track actual delivery_cost (business expense)
+   - Track customer_charge (what customer pays)
+   - Flag: added_to_order (whether included in total_amount)
+
+5. Order Types:
+   - "Customer Order": Custom manufacturing with fabric/dye details
+   - "Sale": Inventory-based sales with SKU codes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔌 API ENDPOINTS NEEDED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CUSTOMERS:
+  GET    /api/customers              - List all
+  GET    /api/customers/:id          - Get one
+  POST   /api/customers              - Create
+  PUT    /api/customers/:id          - Update
+  DELETE /api/customers/:id          - Delete
+  GET    /api/customers/search?q=    - Search
+
+ORDERS:
+  GET    /api/orders                 - List all (with customer, items, delivery)
+  GET    /api/orders/:id             - Get one with relations
+  POST   /api/orders                 - Create
+  PUT    /api/orders/:id             - Update
+  DELETE /api/orders/:id             - Delete
+  GET    /api/orders/next-number     - Get next order number
+  GET    /api/orders/sales           - Get sale-type orders only
+
+ORDER ITEMS:
+  POST   /api/order-items            - Add item
+  PUT    /api/order-items/:id        - Update
+  DELETE /api/order-items/:id        - Delete
+
+DELIVERY COSTS:
+  POST   /api/delivery-costs         - Create/update
+  GET    /api/delivery-costs/:orderId - Get by order
+
+EXPENSES:
+  GET    /api/expenses               - List all
+  POST   /api/expenses               - Create
+  PUT    /api/expenses/:id           - Update
+  DELETE /api/expenses/:id           - Delete
+  GET    /api/expenses/total         - Get sum
+
+SALES:
+  GET    /api/sales                  - List all
+  POST   /api/sales                  - Create
+  PUT    /api/sales/:id              - Update
+  DELETE /api/sales/:id              - Delete
+  GET    /api/sales/next-number      - Get next sale number
+
+DASHBOARD:
+  GET    /api/dashboard/metrics      - All metrics in one call
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 PLEASE PROVIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Complete backend API structure with Express.js/NestJS
+2. Database models/schemas for MongoDB/PostgreSQL
+3. Frontend components structure (Angular/React/Next.js)
+4. Authentication implementation (JWT/NextAuth)
+5. Step-by-step migration guide
+6. Environment configuration (.env files)
+7. Package.json for both frontend and backend
+8. Deployment instructions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 UI/UX REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Responsive design (desktop + mobile)
+- Sidebar navigation with icons
+- Dashboard with metric cards and charts
+- Data tables with search, sort, pagination, export
+- Modal forms for create/edit operations
+- Toast notifications for success/error
+- Loading states
+- Confirmation dialogs for delete operations
+- Professional invoice layout
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 SECURITY REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- JWT authentication
+- Protected API routes
+- Input validation
+- SQL/NoSQL injection prevention
+- CORS configuration
+- Environment variables for secrets
+- Password hashing (bcrypt)
+- Rate limiting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 EXAMPLE DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Customer Example:
+{
+  "name": "John Doe",
+  "phone": "+1234567890",
+  "email": "john@example.com",
+  "country": "USA",
+  "city": "New York",
+  "address": "123 Main St"
+}
+
+Order Example:
+{
+  "orderNumber": "6001",
+  "customerId": "507f1f77bcf86cd799439011",
+  "orderDate": "2024-11-28",
+  "orderType": "Customer Order",
+  "orderStatus": "Received",
+  "totalAmount": 5000,
+  "paymentStatus": "Half Payment",
+  "amountPaid": 2500,
+  "amountRemaining": 2500,
+  "orderItems": [
+    {
+      "productType": "Dress",
+      "quantity": 5,
+      "price": 1000,
+      "fabricDetails": "Cotton",
+      "dyeColor": ["Red", "Blue"]
+    }
+  ],
+  "deliveryCost": {
+    "deliveryType": "National",
+    "deliveryCost": 500,
+    "customerCharge": 600,
+    "addedToOrder": true
+  }
+}
+
+Expense Example:
+{
+  "expenseDate": "2024-11-28",
+  "expenseType": "Material",
+  "description": "Cotton fabric purchase",
+  "cost": 2000,
+  "relatedOrderId": "507f1f77bcf86cd799439011"
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 DEPLOYMENT TARGETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Backend: Heroku, Railway, Render, DigitalOcean, AWS
+Frontend: Vercel, Netlify, Firebase Hosting
+Database: MongoDB Atlas, AWS RDS, Supabase (if keeping PostgreSQL)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ MAINTAIN FROM CURRENT SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- All existing functionality
+- Same user interface flow
+- Data validation rules
+- Error handling patterns
+- Business logic calculations
+- Chart visualizations
+- PDF generation capability
+- Export functionality
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 DELIVERABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Please provide:
+
+1. Backend code structure with all files
+2. Frontend code structure with all components
+3. Database schema/models
+4. API documentation
+5. Setup instructions (README.md)
+6. Environment variables template
+7. Migration guide from current system
+8. Testing examples
+9. Deployment guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 ADDITIONAL NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Use TypeScript for type safety
+- Follow best practices for chosen stack
+- Include error handling and validation
+- Add comments for complex logic
+- Use async/await for asynchronous operations
+- Implement proper logging
+- Add database indexes for performance
+- Include seed data for testing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+START WITH: [Choose one]
+□ MEAN Stack (Angular + Express + MongoDB)
+□ MERN Stack (React + Express + MongoDB)
+□ Next.js Full-Stack (Next.js + Prisma + PostgreSQL)
+□ NestJS + Angular (NestJS + Angular + PostgreSQL)
+
+Please begin with the backend API structure and database models.
+
+═══════════════════════════════════════════════════════════════════

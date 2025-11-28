@@ -1,0 +1,43 @@
+{
+  "name": "angular-starter",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build"
+  },
+  "dependencies": {
+    "@angular/animations": "^20.0.0",
+    "@angular/common": "^20.0.0",
+    "@angular/compiler": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/platform-browser": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "@supabase/supabase-js": "^2.86.0",
+    "apexcharts": "^5.3.6",
+    "chart.js": "^4.5.1",
+    "datatables.net-buttons": "^3.2.5",
+    "datatables.net-buttons-dt": "^3.2.5",
+    "datatables.net-dt": "^2.3.5",
+    "datatables.net-responsive-dt": "^3.0.7",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
+    "jszip": "^3.10.1",
+    "ng-apexcharts": "^2.0.3",
+    "pdfmake": "^0.2.20",
+    "rxjs": "^7.8.1",
+    "sweetalert2": "^11.26.3",
+    "tslib": "^2.5.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.0.0",
+    "@angular/cli": "^20.0.0",
+    "@angular/compiler-cli": "^20.0.0",
+    "@types/jquery": "^3.5.33",
+    "@types/node": "^24.10.1",
+    "@types/pdfmake": "^0.2.12",
+    "typescript": "^5.8.2"
+  }
+}
