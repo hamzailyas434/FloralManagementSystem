@@ -67,8 +67,8 @@ import html2canvas from 'html2canvas';
             <tr>
               <th>#</th>
               <th>Product Type</th>
-              <th>Fabric Details</th>
-              <th>Dye Color</th>
+              <th *ngIf="order.order_type === 'Customer Order'">Fabric Details</th>
+              <th *ngIf="order.order_type === 'Customer Order'">Dye Color</th>
               <th>Quantity</th>
               <th>Price</th>
               <th>Total</th>
@@ -78,8 +78,8 @@ import html2canvas from 'html2canvas';
             <tr *ngFor="let item of order.order_items; let i = index">
               <td>{{ i + 1 }}</td>
               <td>{{ item.product_type }}</td>
-              <td>{{ item.fabric_details || '-' }}</td>
-              <td>
+              <td *ngIf="order.order_type === 'Customer Order'">{{ item.fabric_details || '-' }}</td>
+              <td *ngIf="order.order_type === 'Customer Order'">
                 <div *ngIf="item.dye_color && item.dye_color.length > 0" class="colors-list">
                   <div *ngFor="let color of item.dye_color; let colorIdx = index" class="color-item">
                     <strong>{{ item.product_type }} {{ colorIdx + 1 }}:</strong> {{ color || 'Not specified' }}
@@ -513,10 +513,16 @@ export class InvoiceComponent implements OnInit {
     if (!element) return;
 
     try {
+      // Optimized settings for better quality and smaller file size
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2.5,              // Higher scale for better quality
         logging: false,
-        useCORS: true
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        imageTimeout: 0,
+        removeContainer: true,
+        allowTaint: false,
+        foreignObjectRendering: false
       });
 
       const imgWidth = 210; // A4 width in mm
@@ -526,21 +532,26 @@ export class InvoiceComponent implements OnInit {
       const pdf = new jsPDF('p', 'mm', 'a4');
       let heightLeft = imgHeight;
       let position = 0;
-      const imgData = canvas.toDataURL('image/png');
+      
+      // Use JPEG with quality 0.95 for much smaller file size
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
       }
 
       pdf.save(`invoice-${this.order?.order_number || 'download'}.pdf`);
+      
+      console.log('PDF generated successfully');
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     }
   }
 

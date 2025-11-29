@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { CustomerService } from '../../services/customer.service';
 import { SalesService } from '../../services/sales.service';
+import { WhatsAppService } from '../../services/whatsapp.service';
 import { Order, OrderItem, Customer, DeliveryCost, OrderWithDetails, SaleWithDetails, SkuItem } from '../../models/database.types';
 import Swal from 'sweetalert2';
 
@@ -106,12 +107,24 @@ import Swal from 'sweetalert2';
               </div>
 
               <div class="form-grid">
+                <!-- Sale Selector - Only for Sale type orders -->
                 <div class="form-group full-width" *ngIf="order.order_type === 'Sale'">
+                  <label>Select Sale *</label>
+                  <select [(ngModel)]="item.sale_id" (change)="onSaleSelect(item)" required>
+                    <option value="">-- Select Sale First --</option>
+                    <option *ngFor="let sale of sales" [value]="sale.id">
+                      {{ sale.sales_name }} ({{ sale.sale_date | date:'dd MMM yyyy' }})
+                    </option>
+                  </select>
+                </div>
+
+                <!-- SKU Selector - Only shows SKUs from selected sale -->
+                <div class="form-group full-width" *ngIf="order.order_type === 'Sale' && item.sale_id">
                   <label>Select SKU *</label>
                   <select [(ngModel)]="item.sku_code" (change)="onSkuSelect(item)" required>
                     <option value="">Select SKU</option>
-                    <option *ngFor="let sku of availableSkus" [value]="sku.sku.sku_code">
-                      {{ sku.sku.sku_code }} - Available: {{ sku.sku.quantity }} ({{ sku.sale.sales_name }})
+                    <option *ngFor="let sku of getSkusForSale(item.sale_id)" [value]="sku.sku_code">
+                      {{ sku.sku_code }} - Available: {{ sku.quantity }}
                     </option>
                   </select>
                 </div>
@@ -120,7 +133,8 @@ import Swal from 'sweetalert2';
                   <strong>Sale Info:</strong> {{ getSaleName(item.sale_id) }}
                 </div>
 
-                <div class="form-group" *ngIf="order.order_type !== 'Sale'">
+                <!-- Product Type - For ALL order types -->
+                <div class="form-group">
                   <label>Product Type *</label>
                   <select [(ngModel)]="item.product_type" required>
                     <option value="">Select Type</option>
@@ -208,12 +222,13 @@ import Swal from 'sweetalert2';
 
             <div class="form-group">
               <label>Order Status *</label>
-              <select [(ngModel)]="order.order_status" required>
+              <select [(ngModel)]="order.order_status" (change)="onOrderStatusChange()" required>
                 <option value="Received">Received</option>
                 <option value="In Progress">In Progress</option>
                 <option value="In Embellishment Process">In Embellishment Process</option>
                 <option value="In Stitching Process">In Stitching Process</option>
                 <option value="Ready">Ready</option>
+                <option value="Completed">Completed</option>
                 <option value="Delivered">Delivered</option>
               </select>
             </div>
@@ -270,7 +285,15 @@ import Swal from 'sweetalert2';
               <label>Total Amount with Delivery</label>
               <input type="number" [value]="getTotalWithDelivery()" readonly>
             </div>
+          
           </div>
+        </section>
+        
+        <!-- Save Order Button -->
+        <section class="save-button-section">
+          <button class="btn-save" (click)="saveOrder()" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Save Order' }}
+          </button>
         </section>
 
         <!-- Customer Order History -->
@@ -426,6 +449,15 @@ import Swal from 'sweetalert2';
       padding: 1rem;
       border-radius: 8px;
       margin-bottom: 1.5rem;
+    }
+
+    .save-button-section {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .save-button-section .btn-save {
+      min-width: 200px;
     }
 
     .form-container {
@@ -825,7 +857,8 @@ export class OrderDetailComponent implements OnInit {
     private router: Router,
     private orderService: OrderService,
     private customerService: CustomerService,
-    private salesService: SalesService
+    private salesService: SalesService,
+    private whatsappService: WhatsAppService
   ) {}
 
   async ngOnInit() {
@@ -968,6 +1001,50 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
+  async onOrderStatusChange() {
+    // Only send WhatsApp for existing orders (not new ones)
+    if (this.isNew || !this.order.id) {
+      console.log('Skipping WhatsApp - order not saved yet');
+      return;
+    }
+
+    // Only send if customer has phone number
+    if (!this.customerData.phone) {
+      console.log('Skipping WhatsApp - no customer phone number');
+      return;
+    }
+
+    try {
+      console.log('📱 Order status changed to:', this.order.order_status);
+      
+      // Send WhatsApp notification
+      const success = await this.whatsappService.sendOrderStatusNotification(
+        this.customerData.phone,
+        this.customerData.name || 'Customer',
+        this.order.order_number || '',
+        this.order.order_status || ''
+      );
+
+      if (success) {
+        // Show success toast (small notification)
+        const toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+
+        toast.fire({
+          icon: 'success',
+          title: '📱 WhatsApp sent to customer!'
+        });
+      }
+    } catch (error) {
+      console.error('Error sending WhatsApp:', error);
+    }
+  }
+
   addItem() {
     this.orderItems.push({
       product_type: '',
@@ -982,22 +1059,44 @@ export class OrderDetailComponent implements OnInit {
     this.calculateTotalAmount();
   }
 
+  onSaleSelect(item: Partial<OrderItem>) {
+    // Clear SKU when sale changes
+    item.sku_code = '';
+    item.product_type = '';
+    item.quantity = 1;
+    console.log('Sale selected:', item.sale_id);
+  }
+
+  getSkusForSale(saleId: string): SkuItem[] {
+    const sale = this.sales.find(s => s.id === saleId);
+    if (!sale || !sale.sku_items) {
+      return [];
+    }
+    // Return only SKUs with quantity > 0
+    return sale.sku_items.filter(sku => sku.quantity > 0);
+  }
+
   onSkuSelect(item: Partial<OrderItem>) {
-    if (item.sku_code) {
-      const selected = this.availableSkus.find(s => s.sku.sku_code === item.sku_code);
-      if (selected) {
-        item.sale_id = selected.sale.id;
-        item.product_type = selected.sku.sku_code;
-        item.quantity = Math.min(item.quantity || 1, selected.sku.quantity);
+    if (item.sku_code && item.sale_id) {
+      const sale = this.sales.find(s => s.id === item.sale_id);
+      if (sale) {
+        const selectedSku = sale.sku_items.find(sku => sku.sku_code === item.sku_code);
+        if (selectedSku) {
+          item.product_type = selectedSku.sku_code;
+          item.quantity = Math.min(item.quantity || 1, selectedSku.quantity);
+        }
       }
     }
     this.calculateTotalAmount();
   }
 
   getMaxQuantity(item: Partial<OrderItem>): number {
-    if (this.order.order_type === 'Sale' && item.sku_code) {
-      const selected = this.availableSkus.find(s => s.sku.sku_code === item.sku_code);
-      return selected ? selected.sku.quantity : 0;
+    if (this.order.order_type === 'Sale' && item.sku_code && item.sale_id) {
+      const sale = this.sales.find(s => s.id === item.sale_id);
+      if (sale) {
+        const sku = sale.sku_items.find(s => s.sku_code === item.sku_code);
+        return sku ? sku.quantity : 0;
+      }
     }
     return 999999;
   }

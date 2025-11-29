@@ -50,6 +50,12 @@ import { filter } from 'rxjs/operators';
               <span>Sales</span>
             </a>
           </li>
+          <li>
+            <a routerLink="/reports" routerLinkActive="active">
+              <span class="icon">📊</span>
+              <span>Reports</span>
+            </a>
+          </li>
         </ul>
 
         <div class="user-section" *ngIf="currentUser">

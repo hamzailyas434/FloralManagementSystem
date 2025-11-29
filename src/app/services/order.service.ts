@@ -160,9 +160,21 @@ export class OrderService {
 
   async getNextOrderNumber(): Promise<string> {
     console.log('getNextOrderNumber called');
+    
+    // Get today's date in YYYYMMDD format
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
+    
+    // Get all orders from today
+    const todayPrefix = `ORD-${dateStr}-`;
+    
     const { data, error } = await this.supabase.client
       .from('orders')
       .select('order_number')
+      .like('order_number', `${todayPrefix}%`)
       .order('order_number', { ascending: false })
       .limit(1);
 
@@ -171,27 +183,30 @@ export class OrderService {
       throw error;
     }
 
-    console.log('Last order data:', data);
+    console.log('Last order data for today:', data);
 
-    if (!data || data.length === 0) {
-      console.log('No orders found, starting from 6000');
-      return '6000';
+    let nextSequence = 1; // Start from 0001
+
+    if (data && data.length > 0) {
+      const lastOrderNumber = data[0].order_number;
+      console.log('Last order number:', lastOrderNumber);
+      
+      // Extract sequence number from ORD-YYYYMMDD-####
+      const parts = lastOrderNumber.split('-');
+      if (parts.length === 3) {
+        const lastSequence = parseInt(parts[2]);
+        if (!isNaN(lastSequence)) {
+          nextSequence = lastSequence + 1;
+        }
+      }
     }
 
-    const lastOrderNumber = data[0].order_number;
-    console.log('Last order number:', lastOrderNumber);
+    // Format: ORD-YYYYMMDD-####
+    const sequenceStr = String(nextSequence).padStart(4, '0');
+    const newOrderNumber = `ORD-${dateStr}-${sequenceStr}`;
     
-    // Handle NaN case - if order number is not a valid number
-    const lastNumber = parseInt(lastOrderNumber);
-    if (isNaN(lastNumber)) {
-      console.error('Last order number is not a valid number:', lastOrderNumber);
-      // Find the highest valid number or start from 6000
-      return '6000';
-    }
-    
-    const nextNumber = (lastNumber + 1).toString();
-    console.log('Next order number:', nextNumber);
-    return nextNumber;
+    console.log('Next order number:', newOrderNumber);
+    return newOrderNumber;
   }
 
   async getSaleOrders(): Promise<OrderWithDetails[]> {
