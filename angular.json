@@ -36,7 +36,13 @@
                 "glob": "invoice-logo.jpg",
                 "input": "./",
                 "output": "/"
-              }
+              },
+              {
+                "glob": "Transparent-Logo.png",
+                "input": "./",
+                "output": "/"
+              },
+              "src/assets"
             ],
             "index": "src/index.html",
             "browser": "src/main.ts",

@@ -13,8 +13,10 @@ import { filter } from 'rxjs/operators';
     <div class="app-container" [class.auth-layout]="isAuthPage">
       <nav class="sidebar" *ngIf="!isAuthPage">
         <div class="brand">
-          <h1>Cloth Brand</h1>
-          <p>Management System</p>
+          <div class="brand-text">
+            <h1>Cloth Brand</h1>
+            <p>Management System</p>
+          </div>
         </div>
 
         <ul class="nav-links">
@@ -73,76 +75,163 @@ import { filter } from 'rxjs/operators';
   styles: [`
     .app-container {
       display: flex;
-      height: 100vh;
-      background: #f5f7fa;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 50%, #dee2e6 100%);
+      position: relative;
+    }
+
+    .app-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(200, 200, 220, 0.2), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(220, 220, 240, 0.2), transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(210, 210, 230, 0.15), transparent 50%);
+      pointer-events: none;
     }
 
     .app-container.auth-layout {
-      background: transparent;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     .sidebar {
-      width: 260px;
-      background: linear-gradient(180deg, #1a365d 0%, #2c5282 100%);
-      color: white;
-      padding: 2rem 0;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      width: 280px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0.5) 0%, 
+        rgba(255, 255, 255, 0.3) 100%);
+      pointer-events: none;
     }
 
     .brand {
-      padding: 0 2rem 2rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 2rem;
+      padding: 2rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .brand-text {
+      flex: 1;
     }
 
     .brand h1 {
       margin: 0;
       font-size: 1.5rem;
       font-weight: 700;
+      color: #1a202c;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .brand p {
       margin: 0.25rem 0 0;
       font-size: 0.875rem;
-      opacity: 0.8;
+      color: #4a5568;
     }
 
     .nav-links {
       list-style: none;
-      padding: 0;
+      padding: 1.5rem 1rem;
       margin: 0;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-links li {
+      margin-bottom: 0.5rem;
     }
 
     .nav-links li a {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 1rem 2rem;
-      color: rgba(255, 255, 255, 0.9);
+      padding: 1rem 1.25rem;
+      color: #2d3748;
       text-decoration: none;
-      transition: all 0.2s;
-      border-left: 3px solid transparent;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-links li a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.03);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .nav-links li a:hover::before {
+      opacity: 1;
     }
 
     .nav-links li a:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      transform: translateX(5px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      color: #1a202c;
     }
 
     .nav-links li a.active {
-      background: rgba(255, 255, 255, 0.15);
-      border-left-color: #63b3ed;
-      color: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      color: #667eea;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.2);
     }
 
     .icon {
-      font-size: 1.25rem;
+      font-size: 1.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     .main-content {
       flex: 1;
-      overflow-y: auto;
       padding: 2rem;
+      overflow-y: auto;
+      position: relative;
+      z-index: 1;
     }
 
     .main-content.full-width {
@@ -159,12 +248,22 @@ import { filter } from 'rxjs/operators';
 
       .sidebar {
         width: 100%;
-        padding: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        height: auto;
+        min-height: auto;
+        padding: 0;
+        position: relative;
       }
 
       .brand {
-        padding: 0 1rem 1rem;
+        padding: 1.5rem;
+        flex-direction: row;
+        justify-content: flex-start;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      }
+
+      .brand-logo {
+        width: 45px;
+        height: 45px;
       }
 
       .brand h1 {
@@ -176,14 +275,11 @@ import { filter } from 'rxjs/operators';
       }
 
       .nav-links {
-        display: flex;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-
-      .nav-links::-webkit-scrollbar {
-        display: none;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        padding: 1rem;
+        overflow-x: visible;
       }
 
       .nav-links li {
@@ -191,16 +287,63 @@ import { filter } from 'rxjs/operators';
       }
 
       .nav-links li a {
-        padding: 0.75rem 1.5rem;
+        padding: 1rem 0.5rem;
         flex-direction: column;
-        gap: 0.25rem;
-        font-size: 0.875rem;
-        min-width: 80px;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        min-width: auto;
         text-align: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.5);
+        color: #2d3748;
+      }
+
+      .nav-links li a.active {
+        background: rgba(255, 255, 255, 0.9);
+        color: #667eea;
+      }
+
+      .nav-links li a:hover {
+        background: rgba(255, 255, 255, 0.7);
       }
 
       .icon {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+      }
+
+      .user-section {
+        padding: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        margin-top: 0;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 12px;
+      }
+
+      .user-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+      }
+
+      .user-name {
+        font-size: 0.9375rem;
+      }
+
+      .user-email {
+        font-size: 0.8125rem;
+      }
+
+      .btn-logout {
+        padding: 0.875rem 1rem;
+        font-size: 0.9375rem;
       }
 
       .main-content {
@@ -210,8 +353,10 @@ import { filter } from 'rxjs/operators';
 
     .user-section {
       margin-top: auto;
-      padding: 1.5rem 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      position: relative;
+      z-index: 1;
     }
 
     .user-info {
@@ -222,16 +367,18 @@ import { filter } from 'rxjs/operators';
     }
 
     .user-avatar {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.875rem;
+      font-size: 1rem;
       color: white;
+      border: 2px solid rgba(102, 126, 234, 0.2);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
     }
 
     .user-details {
@@ -241,16 +388,16 @@ import { filter } from 'rxjs/operators';
 
     .user-name {
       font-weight: 600;
-      font-size: 0.875rem;
-      color: white;
+      font-size: 0.9375rem;
+      color: #1a202c;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .user-email {
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8125rem;
+      color: #718096;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -262,20 +409,23 @@ import { filter } from 'rxjs/operators';
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.1);
+      padding: 0.875rem 1rem;
+      background: rgba(239, 68, 68, 0.2);
       color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      font-size: 0.875rem;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 12px;
+      font-size: 0.9375rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
 
     .btn-logout:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(239, 68, 68, 0.4);
+      border-color: rgba(239, 68, 68, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
     }
 
     @media (max-width: 768px) {
@@ -374,7 +524,13 @@ export class AppComponent implements OnInit {
   }
 
   async logout() {
-    await this.authService.signOut();
+    const confirmed = confirm('Are you sure you want to logout?');
+    if (!confirmed) return;
+
+    const result = await this.authService.signOut();
+    if (result.error) {
+      alert('Logout failed: ' + result.error);
+    }
   }
 }
 

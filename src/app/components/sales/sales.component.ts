@@ -294,6 +294,19 @@ import Swal from 'sweetalert2';
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .table-container h3 {
+      margin: 0 0 1rem;
+      color: #1a202c;
+      font-size: 1.25rem;
+    }
+
+    .subtitle {
+      margin: 0.5rem 0 1rem;
+      color: #718096;
+      font-size: 0.875rem;
     }
 
     .btn-view, .btn-delete {
@@ -547,10 +560,8 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    if (!this.loading && !this.error) {
-      this.initializeDataTable();
-      this.initializeSkuTrackingTable();
-    }
+    // DataTable initialization moved to loadData() to ensure data is loaded first
+    // SKU tracking table is initialized separately when that data loads
   }
 
   ngOnDestroy(): void {
@@ -602,6 +613,10 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
       this.error = err.message || 'Failed to load sales';
     } finally {
       this.loading = false;
+      // Initialize DataTable after data loads
+      setTimeout(() => {
+        this.initializeDataTable();
+      }, 100);
     }
   }
 
