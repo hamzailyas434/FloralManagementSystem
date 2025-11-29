@@ -159,20 +159,39 @@ export class OrderService {
   }
 
   async getNextOrderNumber(): Promise<string> {
+    console.log('getNextOrderNumber called');
     const { data, error } = await this.supabase.client
       .from('orders')
       .select('order_number')
       .order('order_number', { ascending: false })
       .limit(1);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching last order number:', error);
+      throw error;
+    }
+
+    console.log('Last order data:', data);
 
     if (!data || data.length === 0) {
+      console.log('No orders found, starting from 6000');
       return '6000';
     }
 
-    const lastNumber = parseInt(data[0].order_number);
-    return (lastNumber + 1).toString();
+    const lastOrderNumber = data[0].order_number;
+    console.log('Last order number:', lastOrderNumber);
+    
+    // Handle NaN case - if order number is not a valid number
+    const lastNumber = parseInt(lastOrderNumber);
+    if (isNaN(lastNumber)) {
+      console.error('Last order number is not a valid number:', lastOrderNumber);
+      // Find the highest valid number or start from 6000
+      return '6000';
+    }
+    
+    const nextNumber = (lastNumber + 1).toString();
+    console.log('Next order number:', nextNumber);
+    return nextNumber;
   }
 
   async getSaleOrders(): Promise<OrderWithDetails[]> {

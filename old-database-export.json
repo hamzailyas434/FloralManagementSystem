@@ -1,0 +1,172 @@
+{
+  "customers": [
+    {
+      "id": "5bc2901e-2fdb-41de-a772-f01d52fd5d2c",
+      "name": "Hamza Ilyas",
+      "phone": "017622547752",
+      "email": "hamzailyas434@gmail.com",
+      "country": "Germany",
+      "city": "Chemnitz, Sachs",
+      "address": "Reichenhainer Straße 35/545",
+      "created_at": "2025-11-28T07:23:01.938604+00:00"
+    }
+  ],
+  "sales": [
+    {
+      "id": "fc8a4279-b784-445b-a460-c9166c97c9d7",
+      "sale_number": "SALE-001",
+      "sale_date": "2025-11-28",
+      "customer_id": null,
+      "sku_items": [
+        {
+          "quantity": 9,
+          "sku_code": "1GPB"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1GPBO"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1CBR"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1PGP"
+        },
+        {
+          "quantity": 11,
+          "sku_code": "1OWM"
+        },
+        {
+          "quantity": 9,
+          "sku_code": "1SPP"
+        },
+        {
+          "quantity": 9,
+          "sku_code": "1GMG"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1LPM"
+        },
+        {
+          "quantity": 11,
+          "sku_code": "1PPR"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1SPO"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1TYM"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1DPM"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1POB"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1SBL"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1LPP"
+        },
+        {
+          "quantity": 10,
+          "sku_code": "1PHP"
+        },
+        {
+          "quantity": 15,
+          "sku_code": "1LPR"
+        },
+        {
+          "quantity": 9,
+          "sku_code": "1NPP"
+        },
+        {
+          "quantity": 3,
+          "sku_code": "1SNO"
+        },
+        {
+          "quantity": 6,
+          "sku_code": "1SRB"
+        },
+        {
+          "quantity": 9,
+          "sku_code": "2LPR"
+        }
+      ],
+      "total_items": 201,
+      "notes": null,
+      "created_at": "2025-11-28T06:18:22.764452+00:00",
+      "updated_at": "2025-11-28T07:07:37.390191+00:00",
+      "sales_name": "November Sale"
+    }
+  ],
+  "orders": [],
+  "order_items": [],
+  "delivery_costs": [],
+  "expenses": [
+    {
+      "id": "37f2cb8a-93a8-4e8f-87ba-44922c28a486",
+      "expense_date": "2025-11-28",
+      "expense_type": "Making",
+      "description": "Making Material 207 Dupatta Nov Sale",
+      "cost": 144900,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:24:13.380758+00:00"
+    },
+    {
+      "id": "5ea71508-7161-4c68-8a31-229c4388ebf0",
+      "expense_date": "2025-11-28",
+      "expense_type": "Making",
+      "description": "Dupatta Making Nov Sale",
+      "cost": 310500,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:23:23.783194+00:00"
+    },
+    {
+      "id": "9f1ec249-f620-4f58-b15b-b71a84ebc409",
+      "expense_date": "2025-11-28",
+      "expense_type": "Material",
+      "description": "Dupatta Fabric Nov Sale",
+      "cost": 103500,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:22:00.427086+00:00"
+    },
+    {
+      "id": "a0f73c4a-9dc3-40b8-b898-913c4f625d43",
+      "expense_date": "2025-11-28",
+      "expense_type": "Material",
+      "description": "Peeko",
+      "cost": 20700,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:25:01.697898+00:00"
+    },
+    {
+      "id": "301a326c-15fe-4834-8ac2-d329f3d8ba8d",
+      "expense_date": "2025-11-28",
+      "expense_type": "Delivery",
+      "description": "Nov Sale Rider Expense",
+      "cost": 5000,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:25:46.764511+00:00"
+    },
+    {
+      "id": "2fa02d6f-0177-4c3b-aa88-602601c058cb",
+      "expense_date": "2025-11-28",
+      "expense_type": "Making",
+      "description": "Nov Sales Dupatta Paint",
+      "cost": 20000,
+      "related_order_id": null,
+      "created_at": "2025-11-28T10:26:19.64051+00:00"
+    }
+  ]
+}

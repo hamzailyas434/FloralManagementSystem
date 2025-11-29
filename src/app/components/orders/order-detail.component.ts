@@ -272,6 +272,36 @@ import Swal from 'sweetalert2';
             </div>
           </div>
         </section>
+
+        <!-- Customer Order History -->
+        <section class="form-section" *ngIf="!isNew && customerOrders.length > 0">
+          <h3>Customer Order History</h3>
+          <p class="subtitle">Previous orders from {{ customerData.name }}</p>
+          
+          <div class="customer-orders-list">
+            <div class="customer-order-card" *ngFor="let custOrder of customerOrders" (click)="viewCustomerOrder(custOrder.id)">
+              <div class="order-header-row">
+                <span class="order-number-link">{{ custOrder.order_number }}</span>
+                <span class="order-date">{{ formatDate(custOrder.order_date) }}</span>
+              </div>
+              <div class="order-details-row">
+                <span class="order-type-badge" [ngClass]="custOrder.order_type === 'Sale' ? 'type-sale' : 'type-customer'">
+                  {{ custOrder.order_type }}
+                </span>
+                <span class="order-status">{{ custOrder.order_status }}</span>
+                <span class="order-amount">Rs. {{ custOrder.total_amount.toFixed(2) }}</span>
+              </div>
+              <div class="order-payment-row">
+                <span class="payment-badge" [ngClass]="'payment-' + custOrder.payment_status.toLowerCase().replace(' ', '-')">
+                  {{ custOrder.payment_status }}
+                </span>
+                <span class="remaining-amount" *ngIf="custOrder.amount_remaining > 0">
+                  Remaining: Rs. {{ custOrder.amount_remaining.toFixed(2) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   `,
@@ -661,6 +691,84 @@ import Swal from 'sweetalert2';
       margin: 0 0 1rem;
     }
 
+    .subtitle {
+      color: #718096;
+      font-size: 0.875rem;
+      margin: -0.5rem 0 1.5rem;
+    }
+
+    .customer-orders-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .customer-order-card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .customer-order-card:hover {
+      background: white;
+      border-color: #3182ce;
+      box-shadow: 0 4px 12px rgba(49, 130, 206, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .order-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .order-number-link {
+      font-weight: 700;
+      color: #3182ce;
+      font-size: 1rem;
+    }
+
+    .order-date {
+      color: #718096;
+      font-size: 0.875rem;
+    }
+
+    .order-details-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .order-status {
+      color: #4a5568;
+      font-size: 0.875rem;
+    }
+
+    .order-amount {
+      font-weight: 600;
+      color: #2d3748;
+      margin-left: auto;
+    }
+
+    .order-payment-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .remaining-amount {
+      color: #e53e3e;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
     @media (max-width: 768px) {
       .header {
         flex-wrap: wrap;
@@ -707,6 +815,7 @@ export class OrderDetailComponent implements OnInit {
   customers: Customer[] = [];
   sales: SaleWithDetails[] = [];
   availableSkus: {sale: SaleWithDetails; sku: SkuItem}[] = [];
+  customerOrders: OrderWithDetails[] = []; // Customer's previous orders
   selectedCustomerId = '';
   saving = false;
   error: string | null = null;
@@ -720,15 +829,24 @@ export class OrderDetailComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    console.log('=== ngOnInit STARTED ===');
     await Promise.all([this.loadCustomers(), this.loadSales()]);
 
     const id = this.route.snapshot.paramMap.get('id');
+    console.log('Route ID:', id);
+    
     if (id === 'new') {
+      console.log('Creating new order...');
       this.isNew = true;
-      this.order.order_number = await this.orderService.getNextOrderNumber();
+      const nextOrderNumber = await this.orderService.getNextOrderNumber();
+      this.order.order_number = nextOrderNumber;
+      console.log('Generated order number:', nextOrderNumber);
     } else if (id) {
+      console.log('Loading existing order:', id);
       await this.loadOrder(id);
     }
+    
+    console.log('=== ngOnInit COMPLETED ===');
   }
 
   async loadCustomers() {
@@ -807,11 +925,36 @@ export class OrderDetailComponent implements OnInit {
         if (orderData.customer) {
           this.customerData = orderData.customer;
           this.selectedCustomerId = orderData.customer.id;
+          
+          // Load customer's other orders
+          await this.loadCustomerOrders(orderData.customer.id, id);
         }
       }
     } catch (err: any) {
       this.error = err.message || 'Failed to load order';
     }
+  }
+
+  async loadCustomerOrders(customerId: string, currentOrderId: string) {
+    try {
+      // Get all orders for this customer except the current one
+      const allOrders = await this.orderService.getOrders();
+      this.customerOrders = allOrders
+        .filter(order => order.customer_id === customerId && order.id !== currentOrderId)
+        .sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+      
+      console.log(`Loaded ${this.customerOrders.length} previous orders for customer`);
+    } catch (err: any) {
+      console.error('Failed to load customer orders:', err);
+    }
+  }
+
+  viewCustomerOrder(orderId: string) {
+    // Navigate to the order and force reload
+    this.router.navigate(['/orders', orderId]).then(() => {
+      // Reload the page data
+      window.location.reload();
+    });
   }
 
   onCustomerSelect() {
@@ -973,16 +1116,25 @@ export class OrderDetailComponent implements OnInit {
   }
 
   async saveOrder() {
-    console.log('=== saveOrder STARTED - NEW CODE VERSION ===');
+    console.log('=== saveOrder STARTED ===');
+    console.log('isNew:', this.isNew);
     console.log('Current order object:', this.order);
+    console.log('Order ID:', this.order.id);
+    
+    // Capture if this is a new order BEFORE any modifications
+    const wasNewOrder = this.isNew || !this.order.id;
+    console.log('wasNewOrder:', wasNewOrder);
+    
     try {
       this.saving = true;
       this.error = null;
 
+      // Validate customer
       if (!this.customerData.name) {
         throw new Error('Customer name is required');
       }
 
+      // Handle customer creation/update
       let customerId = this.selectedCustomerId;
       if (!customerId) {
         const newCustomer = await this.customerService.createCustomer(this.customerData);
@@ -990,8 +1142,6 @@ export class OrderDetailComponent implements OnInit {
       } else {
         await this.customerService.updateCustomer(customerId, this.customerData);
       }
-
-      let orderId = this.order.id;
 
       // Prepare order data without joined fields
       const orderData = {
@@ -1008,19 +1158,50 @@ export class OrderDetailComponent implements OnInit {
 
       console.log('Saving order with data:', orderData);
 
-      if (this.isNew) {
+      let orderId: string;
+
+      // Check if this is a new order (either isNew flag OR no order ID)
+      if (wasNewOrder) {
+        // Generate fresh order number to prevent duplicates
+        console.log('Generating fresh order number...');
+        const freshOrderNumber = await this.orderService.getNextOrderNumber();
+        orderData.order_number = freshOrderNumber;
+        console.log('Fresh order number:', freshOrderNumber);
+        
+        // Create new order
+        console.log('Creating new order... (isNew:', this.isNew, ', order.id:', this.order.id, ')');
         const newOrder = await this.orderService.createOrder(orderData);
         orderId = newOrder.id;
+        console.log('New order created with ID:', orderId);
+        
+        // Update the local order object with the new ID and order number
+        this.order.id = orderId;
+        this.order.order_number = freshOrderNumber;
+        this.isNew = false; // Mark as no longer new
       } else {
-        console.log('Updating order ID:', orderId);
-        await this.orderService.updateOrder(orderId!, orderData);
+        // Update existing order
+        const existingOrderId = this.order.id;
+        
+        // Validate order ID exists
+        if (!existingOrderId) {
+          throw new Error('Order ID is missing. Cannot update order.');
+        }
+        
+        orderId = existingOrderId; // Now TypeScript knows it's not undefined
+        console.log('Updating existing order ID:', orderId);
+        await this.orderService.updateOrder(orderId, orderData);
+        console.log('Order updated successfully');
       }
 
+      // Save order items
+      console.log('Saving order items...');
       for (const item of this.orderItems) {
-        console.log('Saving item:', item);
+        console.log('Processing item:', item);
         if (item.id) {
+          // Update existing item
           await this.orderService.updateOrderItem(item.id, item);
         } else {
+          // Create new item
           await this.orderService.addOrderItem({
             ...item,
             order_id: orderId
@@ -1028,8 +1209,9 @@ export class OrderDetailComponent implements OnInit {
         }
       }
 
-      // Deduct SKU quantities from sales if order type is Sale
+      // Deduct SKU quantities from sales if order type is Sale (only for new orders)
       if (this.order.order_type === 'Sale' && this.isNew) {
+        console.log('Deducting SKU quantities...');
         for (const item of this.orderItems) {
           if (item.sale_id && item.sku_code && item.quantity) {
             await this.deductSkuQuantity(item.sale_id, item.sku_code, item.quantity);
@@ -1037,7 +1219,9 @@ export class OrderDetailComponent implements OnInit {
         }
       }
 
+      // Save delivery cost if provided
       if (this.deliveryCost.delivery_cost) {
+        console.log('Saving delivery cost...');
         this.deliveryCost.customer_charge = this.deliveryCost.delivery_cost;
         await this.orderService.saveDeliveryCost({
           ...this.deliveryCost,
@@ -1045,18 +1229,22 @@ export class OrderDetailComponent implements OnInit {
         });
       }
 
+      // Show success message and navigate
       await Swal.fire({
         icon: 'success',
         title: 'Success!',
-        text: this.isNew ? 'Order created successfully!' : 'Order updated successfully!',
+        text: wasNewOrder ? 'Order created successfully!' : 'Order updated successfully!',
         timer: 2000,
         showConfirmButton: false
       });
-      this.router.navigate(['/orders']);
+      
+      console.log('Navigating to /orders...');
+      await this.router.navigate(['/orders']);
+      console.log('Navigation complete');
     } catch (err: any) {
       console.error('=== ERROR IN saveOrder ===', err);
       this.error = err.message || 'Failed to save order';
-      console.log('Showing error SweetAlert:', this.error);
+      console.log('Error details:', err);
 
       try {
         await Swal.fire({
@@ -1209,6 +1397,15 @@ export class OrderDetailComponent implements OnInit {
       icon: 'success',
       timer: 2000,
       showConfirmButton: false
+    });
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
     });
   }
 

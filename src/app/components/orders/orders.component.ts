@@ -51,7 +51,11 @@ import Swal from 'sweetalert2';
           </thead>
           <tbody>
             <tr *ngFor="let order of orders">
-              <td>{{ order.order_number }}</td>
+              <td>
+                <a class="order-link" (click)="viewOrder(order.id)" style="cursor: pointer; color: #3182ce; font-weight: 600;">
+                  {{ order.order_number }}
+                </a>
+              </td>
               <td>
                 <span class="order-type-badge" [ngClass]="order.order_type === 'Sale' ? 'type-sale' : 'type-customer'">
                   {{ order.order_type }}
