@@ -71,17 +71,37 @@ import { AuthService } from '../../services/auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 50%, #dee2e6 100%);
       padding: 2rem;
+      position: relative;
+    }
+
+    .auth-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(200, 200, 220, 0.2), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(220, 220, 240, 0.2), transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(210, 210, 230, 0.15), transparent 50%);
+      pointer-events: none;
     }
 
     .auth-card {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 440px;
       overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      position: relative;
+      z-index: 1;
     }
 
     .auth-header {
@@ -89,6 +109,18 @@ import { AuthService } from '../../services/auth.service';
       padding: 3rem 2rem 2rem;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      position: relative;
+    }
+
+    .auth-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+      pointer-events: none;
     }
 
     .logo {
@@ -133,11 +165,12 @@ import { AuthService } from '../../services/auth.service';
     .form-group input {
       width: 100%;
       padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
+      border: 2px solid rgba(0, 0, 0, 0.1);
       border-radius: 10px;
       font-size: 1rem;
       transition: all 0.2s;
-      background: #f7fafc;
+      background: rgba(255, 255, 255, 0.8);
+      color: #1a202c;
     }
 
     .form-group input:focus {
@@ -145,6 +178,10 @@ import { AuthService } from '../../services/auth.service';
       border-color: #667eea;
       background: white;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group input::placeholder {
+      color: #a0aec0;
     }
 
     .form-options {

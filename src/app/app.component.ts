@@ -256,14 +256,17 @@ import { filter } from 'rxjs/operators';
 
       .brand {
         padding: 1.5rem;
-        flex-direction: row;
-        justify-content: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
       }
 
       .brand-logo {
-        width: 45px;
-        height: 45px;
+        width: 60px;
+        height: 60px;
+        margin-bottom: 0.75rem;
       }
 
       .brand h1 {
@@ -410,9 +413,9 @@ import { filter } from 'rxjs/operators';
       justify-content: center;
       gap: 0.5rem;
       padding: 0.875rem 1rem;
-      background: rgba(239, 68, 68, 0.2);
-      color: white;
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a202c;
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
       font-size: 0.9375rem;
       font-weight: 600;
@@ -422,10 +425,10 @@ import { filter } from 'rxjs/operators';
     }
 
     .btn-logout:hover {
-      background: rgba(239, 68, 68, 0.4);
-      border-color: rgba(239, 68, 68, 0.6);
+      background: white;
+      border-color: rgba(0, 0, 0, 0.2);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     }
 
     @media (max-width: 768px) {
