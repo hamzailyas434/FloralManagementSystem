@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseService } from '../../services/expense.service';
-import { Expense } from '../../models/database.types';
+import { OrderService } from '../../services/order.service';
+import { BankService } from '../../services/bank.service';
+import { Expense, OrderWithDetails } from '../../models/database.types';
 
 @Component({
   selector: 'app-expenses',
@@ -116,10 +118,7 @@ import { Expense } from '../../models/database.types';
               <label>Type *</label>
               <select [(ngModel)]="formData.expense_type" name="type" required>
                 <option value="">Select Type</option>
-                <option value="Material">Material</option>
-                <option value="Making">Making</option>
-                <option value="Delivery">Delivery</option>
-                <option value="General Overhead">General Overhead</option>
+                <option *ngFor="let type of expenseTypes" [value]="type">{{ type }}</option>
               </select>
             </div>
 
@@ -134,8 +133,13 @@ import { Expense } from '../../models/database.types';
             </div>
 
             <div class="form-group">
-              <label>Related Order ID (Optional)</label>
-              <input type="text" [(ngModel)]="formData.related_order_id" name="orderId" placeholder="Optional">
+              <label>Related Order (Optional)</label>
+              <select [(ngModel)]="formData.related_order_id" name="orderId">
+                <option value="">No Order</option>
+                <option *ngFor="let order of orders" [value]="order.id">
+                  {{ order.order_number }} - {{ order.customer?.name || 'Unknown' }}
+                </option>
+              </select>
             </div>
 
             <div class="form-actions">
@@ -650,10 +654,38 @@ export class ExpensesComponent implements OnInit {
     cost: 0
   };
 
-  constructor(private expenseService: ExpenseService) {}
+  expenseTypes: string[] = [];
+  orders: OrderWithDetails[] = [];
+
+  constructor(
+    private expenseService: ExpenseService,
+    private orderService: OrderService,
+    private bankService: BankService
+  ) {}
 
   async ngOnInit() {
-    await this.loadExpenses();
+    this.loadExpenseTypes();
+    await Promise.all([
+      this.loadExpenses(),
+      this.loadOrders()
+    ]);
+  }
+
+  loadExpenseTypes() {
+    const stored = localStorage.getItem('expenseTypes');
+    if (stored) {
+      this.expenseTypes = JSON.parse(stored);
+    } else {
+      this.expenseTypes = ['Fabric Purchase', 'Labor Cost', 'Transportation', 'Utilities', 'Rent'];
+    }
+  }
+
+  async loadOrders() {
+    try {
+      this.orders = await this.orderService.getOrders();
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    }
   }
 
   async loadExpenses() {
@@ -729,7 +761,17 @@ export class ExpensesComponent implements OnInit {
       if (this.editingExpense) {
         await this.expenseService.updateExpense(this.editingExpense.id, this.formData);
       } else {
-        await this.expenseService.createExpense(this.formData);
+        const newExpense = await this.expenseService.createExpense(this.formData);
+        
+        // Deduct from Bank Balance
+      if (this.formData.cost) {
+        await this.bankService.updateBalance(
+          this.formData.cost,
+          'expense',
+          this.formData.description || `Expense: ${this.formData.expense_type}`,
+          newExpense.id
+        );
+      }
       }
 
       this.closeForm();

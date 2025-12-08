@@ -10,8 +10,8 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="app-container" [class.auth-layout]="isAuthPage">
-      <nav class="sidebar" *ngIf="!isAuthPage">
+    <div class="app-container" [class.auth-layout]="isAuthPage" [class.invoice-layout]="isPublicInvoice">
+      <nav class="sidebar" *ngIf="!isAuthPage && !isPublicInvoice">
         <div class="brand">
           <div class="brand-text">
             <h1>Cloth Brand</h1>
@@ -56,6 +56,12 @@ import { filter } from 'rxjs/operators';
               <span>Reports</span>
             </a>
           </li>
+          <li>
+            <a routerLink="/product-types" routerLinkActive="active">
+              <span class="icon">⚙️</span>
+              <span>Types</span>
+            </a>
+          </li>
         </ul>
 
         <div class="user-section" *ngIf="currentUser">
@@ -73,7 +79,7 @@ import { filter } from 'rxjs/operators';
         </div>
       </nav>
 
-      <main class="main-content" [class.full-width]="isAuthPage">
+      <main class="main-content" [class.full-width]="isAuthPage || isPublicInvoice">
         <router-outlet></router-outlet>
       </main>
     </div>
@@ -490,6 +496,7 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   currentUser: User | null = null;
   isAuthPage = false;
+  isPublicInvoice = false;
 
   constructor(
     private authService: AuthService,
@@ -502,18 +509,19 @@ export class AppComponent implements OnInit {
     });
 
     // Check initial route
-    this.checkAuthPage(this.router.url);
+    this.checkRoute(this.router.url);
 
     // Listen for route changes
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
-        this.checkAuthPage(event.url);
+        this.checkRoute(event.url);
       });
   }
 
-  checkAuthPage(url: string) {
+  checkRoute(url: string) {
     this.isAuthPage = url.includes('/login') || url.includes('/signup') || url.includes('/forgot-password');
+    this.isPublicInvoice = url.includes('/invoice/');
   }
 
   getUserName(): string {

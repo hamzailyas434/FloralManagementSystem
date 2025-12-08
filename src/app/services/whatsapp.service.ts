@@ -161,4 +161,47 @@ export class WhatsAppService {
       return false;
     }
   }
+
+  /**
+   * Send invoice link via WhatsApp
+   */
+  async sendInvoiceLink(
+    customerPhone: string,
+    customerName: string,
+    orderNumber: string,
+    invoiceUrl: string
+  ): Promise<boolean> {
+    try {
+      const formattedPhone = this.formatPhoneNumber(customerPhone);
+      
+      const message = `Hi ${customerName}! 📄\n\nYour invoice for order #${orderNumber} is ready!\n\nView/Download Invoice:\n${invoiceUrl}\n\nYou can:\n✅ View online\n✅ Download PDF\n✅ Print\n\nThank you for your business!\nFloral Zone 🌸`;
+      
+      console.log('Sending invoice link to:', formattedPhone);
+      console.log('Invoice URL:', invoiceUrl);
+      
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to: formattedPhone,
+          message: message
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log('✅ Invoice link sent successfully!');
+        return true;
+      } else {
+        console.error('❌ Failed to send invoice link:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending invoice link:', error);
+      return false;
+    }
+  }
 }

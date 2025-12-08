@@ -1,9 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { ExpenseService } from '../../services/expense.service';
 import { CustomerService } from '../../services/customer.service';
+import { BankService } from '../../services/bank.service';
+import { SalesService } from '../../services/sales.service';
 import { OrderWithDetails } from '../../models/database.types';
 import { NgApexchartsModule, ChartComponent, ApexChart, ApexNonAxisChartSeries, ApexResponsive, ApexAxisChartSeries, ApexXAxis, ApexYAxis, ApexDataLabels, ApexLegend, ApexFill, ApexStroke, ApexPlotOptions, ApexTooltip, ApexGrid } from 'ng-apexcharts';
 
@@ -27,7 +30,7 @@ export type ChartOptions = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgApexchartsModule],
+  imports: [CommonModule, RouterModule, NgApexchartsModule, FormsModule],
   template: `
     <div class="dashboard-container">
       <div class="header">
@@ -112,6 +115,64 @@ export type ChartOptions = {
               <h3>Sale Orders</h3>
               <p class="stat-value">{{ saleOrdersCount }}</p>
               <span class="stat-label">SKU sales</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bank">🏦</div>
+            <div class="stat-details">
+              <div class="card-header-flex">
+                <h3>Bank Balance</h3>
+                <button class="btn-icon-small" (click)="openTransactionModal()" title="Manage Balance">⚙️</button>
+              </div>
+              <p class="stat-value">Rs. {{ bankBalance.toLocaleString() }}</p>
+              <span class="stat-label">Current cash</span>
+            </div>
+          </div>
+
+          <!-- Transaction Modal -->
+          <div class="modal modal-overlay" [class.active]="showTransactionModal" (click)="closeTransactionModal($event)">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <h3>Manage Bank Balance</h3>
+                <button class="btn-close" (click)="closeTransactionModal()" type="button">&times;</button>
+              </div>
+              <div class="modal-body">
+                <div class="current-balance-display">
+                  <label>Current Balance</label>
+                  <div class="balance-large">Rs. {{ bankBalance.toLocaleString() }}</div>
+                </div>
+
+                <div class="transaction-tabs">
+                  <button [class.active]="transactionType === 'deposit'" (click)="transactionType = 'deposit'">Deposit</button>
+                  <button [class.active]="transactionType === 'withdrawal'" (click)="transactionType = 'withdrawal'">Withdraw</button>
+                </div>
+
+                <div class="form-group">
+                  <label>Amount (Rs.)</label>
+                  <input type="number" [(ngModel)]="transactionAmount" class="form-control" placeholder="Enter amount" min="0">
+                </div>
+
+                <div class="form-group">
+                  <label>Description</label>
+                  <input type="text" [(ngModel)]="transactionDescription" class="form-control" placeholder="e.g. Initial Deposit, Petty Cash">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeTransactionModal()">Cancel</button>
+                <button class="btn-primary" (click)="processTransaction()" [disabled]="!transactionAmount || transactionAmount <= 0">
+                  {{ transactionType === 'deposit' ? 'Add Funds' : 'Withdraw Funds' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon stock">📊</div>
+            <div class="stat-details">
+              <h3>Stock Value</h3>
+              <p class="stat-value">Rs. {{ totalStockValue.toLocaleString() }}</p>
+              <span class="stat-label">Inventory worth</span>
             </div>
           </div>
         </div>
@@ -311,6 +372,14 @@ export type ChartOptions = {
       background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     }
 
+    .stat-icon.bank {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .stat-icon.stock {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
     .stat-details {
       flex: 1;
     }
@@ -492,7 +561,183 @@ export type ChartOptions = {
         align-items: flex-start;
         gap: 0.5rem;
       }
-    }
+      }
+
+      .card-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+      }
+
+      .btn-icon-small {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+      }
+
+      .btn-icon-small:hover {
+        opacity: 1;
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1a202c;
+      }
+
+      .btn-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #718096;
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      .current-balance-display {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      .current-balance-display label {
+        display: block;
+        font-size: 0.875rem;
+        color: #166534;
+        margin-bottom: 0.5rem;
+      }
+
+      .balance-large {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #15803d;
+      }
+
+      .transaction-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        background: #f1f5f9;
+        padding: 0.25rem;
+        border-radius: 8px;
+      }
+
+      .transaction-tabs button {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.2s;
+      }
+
+      .transaction-tabs button.active {
+        background: white;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #475569;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: white;
+        border: 1px solid #cbd5e0;
+        color: #475569;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
 
     @media (min-width: 769px) and (max-width: 1024px) {
       .dashboard-container {
@@ -527,19 +772,29 @@ export class DashboardComponent implements OnInit {
   activeOrders = 0;
   customerOrdersCount = 0;
   saleOrdersCount = 0;
+  bankBalance = 0;
+  totalStockValue = 0;
   recentOrders: OrderWithDetails[] = [];
 
+  // Transaction Modal
+  showTransactionModal = false;
+  transactionType: 'deposit' | 'withdrawal' = 'deposit';
+  transactionAmount: number = 0;
+  transactionDescription: string = '';
+
   // Chart options
-  orderTypeChartOptions: Partial<ChartOptions> | null = null;
-  orderStatusChartOptions: Partial<ChartOptions> | null = null;
-  paymentStatusChartOptions: Partial<ChartOptions> | null = null;
-  revenueExpensesChartOptions: Partial<ChartOptions> | null = null;
-  monthlyOrdersChartOptions: Partial<ChartOptions> | null = null;
+  public orderTypeChartOptions!: Partial<ChartOptions>;
+  public orderStatusChartOptions!: Partial<ChartOptions>;
+  public paymentStatusChartOptions!: Partial<ChartOptions>;
+  public revenueExpensesChartOptions!: Partial<ChartOptions>;
+  public monthlyOrdersChartOptions!: Partial<ChartOptions>;
 
   constructor(
     private orderService: OrderService,
     private expenseService: ExpenseService,
     private customerService: CustomerService,
+    private bankService: BankService,
+    private salesService: SalesService,
     private router: Router
   ) {}
 
@@ -555,10 +810,11 @@ export class DashboardComponent implements OnInit {
       this.loading = true;
       this.error = null;
 
-      const [orders, expenses, customers] = await Promise.all([
+      const [orders, expenses, customers, sales] = await Promise.all([
         this.orderService.getOrders(),
         this.expenseService.getExpenses(),
-        this.customerService.getCustomers()
+        this.customerService.getCustomers(),
+        this.salesService.getSales()
       ]);
 
       this.orders = orders;
@@ -572,6 +828,10 @@ export class DashboardComponent implements OnInit {
       this.customerOrdersCount = orders.filter(o => o.order_type === 'Customer Order').length;
       this.saleOrdersCount = orders.filter(o => o.order_type === 'Sale').length;
       this.recentOrders = orders.slice(0, 5);
+
+      // Load financial data
+      this.bankBalance = await this.bankService.getCurrentBalance();
+      this.totalStockValue = sales.reduce((sum, sale) => sum + (sale.total_stock_value || 0), 0);
 
     } catch (err: any) {
       this.error = err.message || 'Failed to load dashboard data';
@@ -796,6 +1056,53 @@ export class DashboardComponent implements OnInit {
         borderColor: '#f1f1f1'
       }
     };
+  }
+
+  openTransactionModal() {
+    this.showTransactionModal = true;
+    this.transactionType = 'deposit';
+    this.transactionAmount = 0;
+    this.transactionDescription = '';
+  }
+
+  closeTransactionModal(event?: Event) {
+    if (event && event.target) {
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains('modal-overlay')) {
+        return;
+      }
+    }
+    this.showTransactionModal = false;
+  }
+
+  async processTransaction() {
+    if (!this.transactionAmount || this.transactionAmount <= 0) {
+      return;
+    }
+
+    try {
+      this.loading = true;
+      await this.bankService.updateBalance(
+        this.transactionAmount,
+        this.transactionType,
+        this.transactionDescription || (this.transactionType === 'deposit' ? 'Manual Deposit' : 'Manual Withdrawal')
+      );
+      
+      // Refresh balance
+      this.bankBalance = await this.bankService.getCurrentBalance();
+      
+      // Close modal
+      this.closeTransactionModal();
+      
+      // Show success (optional, or just refresh)
+      // Swal.fire('Success', 'Transaction processed', 'success');
+      
+    } catch (err: any) {
+      console.error('Transaction failed:', err);
+      // Swal.fire('Error', 'Transaction failed', 'error');
+    } finally {
+      this.loading = false;
+    }
   }
 
   goToOrders() {

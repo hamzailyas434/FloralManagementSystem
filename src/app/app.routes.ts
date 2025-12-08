@@ -12,6 +12,12 @@ export const routes: Routes = [
     loadComponent: () => import('./components/auth/signup.component').then(m => m.SignupComponent)
   },
   
+  // Public invoice route (for WhatsApp sharing)
+  {
+    path: 'invoice/:id',
+    loadComponent: () => import('./components/orders/invoice.component').then(m => m.InvoiceComponent)
+  },
+  
   // Protected routes
   {
     path: 'dashboard',
@@ -56,6 +62,11 @@ export const routes: Routes = [
   {
     path: 'reports',
     loadComponent: () => import('./components/reports/reports.component').then(m => m.ReportsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'product-types',
+    loadComponent: () => import('./components/settings/product-types.component').then(m => m.ProductTypesComponent),
     canActivate: [authGuard]
   },
   

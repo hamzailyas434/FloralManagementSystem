@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -103,11 +103,11 @@ import Swal from 'sweetalert2';
       </div>
 
       <!-- New Sale Modal -->
-      <div class="modal" [class.active]="showModal" (click)="closeModal($event)">
+      <div class="modal modal-overlay" [class.active]="showModal" (click)="closeModal($event)">
         <div class="modal-content" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>{{ editMode ? 'Edit Sale' : 'Create New Sale' }}</h3>
-            <button class="btn-close" (click)="closeModal($event)">&times;</button>
+            <button class="btn-close" (click)="closeModal()" type="button">&times;</button>
           </div>
 
           <div class="modal-body">
@@ -121,9 +121,30 @@ import Swal from 'sweetalert2';
               <input type="text" [(ngModel)]="currentSale.sales_name" class="form-control" placeholder="Enter sales name" required>
             </div>
 
-            <div class="form-group">
-              <label>Sale Date</label>
-              <input type="date" [(ngModel)]="currentSale.sale_date" class="form-control">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Sale Date</label>
+                <input type="date" [(ngModel)]="currentSale.sale_date" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label>Purchase Price (Rs.)</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="currentSale.purchase_price_per_item" 
+                  class="form-control" 
+                  placeholder="Per item price"
+                  min="0"
+                  step="0.01">
+              </div>
+            </div>
+
+            <div class="stock-summary" *ngIf="currentSale.purchase_price_per_item && currentSale.sku_items && currentSale.sku_items.length > 0">
+              <div class="summary-icon">💰</div>
+              <div class="summary-details">
+                <label>Total Stock Value</label>
+                <div class="summary-value">Rs. {{ calculateStockValue().toLocaleString() }}</div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -173,7 +194,7 @@ import Swal from 'sweetalert2';
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" (click)="closeModal($event)">
+            <button class="btn-secondary" (click)="closeModal()">
               {{ editMode ? 'Close' : 'Cancel' }}
             </button>
             <button *ngIf="!editMode" class="btn-primary" (click)="saveSale()">Create Sale</button>
@@ -357,6 +378,7 @@ import Swal from 'sweetalert2';
     }
 
     .modal-content {
+    margin-left: 25rem !important;
       background: white;
       border-radius: 12px;
       width: 90%;
@@ -410,6 +432,49 @@ import Swal from 'sweetalert2';
       gap: 1rem;
       padding: 1.5rem;
       border-top: 1px solid #e2e8f0;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .stock-summary {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .summary-icon {
+      font-size: 1.5rem;
+      background: white;
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .summary-details label {
+      display: block;
+      font-size: 0.875rem;
+      color: #0369a1;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0c4a6e;
     }
 
     .form-group {
@@ -698,6 +763,7 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const totalItems = this.currentSale.sku_items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const stockValue = this.calculateStockValue();
 
     try {
       await this.salesService.createSale({
@@ -707,16 +773,20 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
         customer_id: this.currentSale.customer_id || undefined,
         sku_items: this.currentSale.sku_items,
         total_items: totalItems,
+        purchase_price_per_item: this.currentSale.purchase_price_per_item || 0,
+        total_stock_value: stockValue,
         notes: this.currentSale.notes
       });
 
       Swal.fire('Success', 'Sale created successfully', 'success');
-      this.closeModal(new Event('close'));
-      await this.loadData();
-      if (this.dataTable) {
-        this.dataTable.destroy();
-      }
-      this.initializeDataTable();
+    this.closeModal();
+    await this.loadData();
+    
+    // Reinitialize DataTable after DOM update
+    if (this.dataTable) {
+      this.dataTable.destroy();
+    }
+    setTimeout(() => this.initializeDataTable(), 100);
     } catch (err: any) {
       Swal.fire('Error', err.message || 'Failed to create sale', 'error');
     }
@@ -747,6 +817,7 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const totalItems = this.currentSale.sku_items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const stockValue = this.calculateStockValue();
 
     try {
       await this.salesService.updateSale(this.currentSale.id!, {
@@ -754,16 +825,20 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
         sale_date: this.currentSale.sale_date,
         sku_items: this.currentSale.sku_items,
         total_items: totalItems,
+        purchase_price_per_item: this.currentSale.purchase_price_per_item || 0,
+        total_stock_value: stockValue,
         notes: this.currentSale.notes
       });
 
       Swal.fire('Success', 'Sale updated successfully', 'success');
-      this.closeModal(new Event('close'));
-      await this.loadData();
-      if (this.dataTable) {
-        this.dataTable.destroy();
-      }
-      this.initializeDataTable();
+    this.closeModal();
+    await this.loadData();
+    
+    // Reinitialize DataTable after DOM update
+    if (this.dataTable) {
+      this.dataTable.destroy();
+    }
+    setTimeout(() => this.initializeDataTable(), 100);
     } catch (err: any) {
       Swal.fire('Error', err.message || 'Failed to update sale', 'error');
     }
@@ -795,11 +870,25 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  closeModal(event: Event) {
-    event.preventDefault();
+  @HostListener('document:keydown.escape', ['$event'])
+  onKeydownHandler(event: KeyboardEvent) {
+    if (this.showModal) {
+      this.closeModal();
+    }
+  }
+
+  closeModal(event?: Event) {
+    // If event is provided and it's not clicking the overlay, don't close
+    if (event && event.target) {
+      const target = event.target as HTMLElement;
+      if (!target.classList || !target.classList.contains('modal-overlay')) {
+        return;
+      }
+    }
+    
+    // Close modal and reset
     this.showModal = false;
     this.editMode = false;
-    this.skuCount = 0;
     this.currentSale = {
       sale_number: '',
       sales_name: '',
@@ -807,6 +896,15 @@ export class SalesComponent implements OnInit, AfterViewInit, OnDestroy {
       sku_items: [],
       total_items: 0
     };
+    this.skuCount = 0;
+  }
+
+  calculateStockValue(): number {
+    if (!this.currentSale.sku_items || !this.currentSale.purchase_price_per_item) {
+      return 0;
+    }
+    const totalItems = this.currentSale.sku_items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    return totalItems * (this.currentSale.purchase_price_per_item || 0);
   }
 
   calculateTotalQuantity(skuItems: SkuItem[]): number {

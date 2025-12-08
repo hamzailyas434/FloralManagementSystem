@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
-import { OrderWithDetails } from '../../models/database.types';
+import { OrderWithDetails, PaymentRecord } from '../../models/database.types';
+import { PaymentService } from '../../services/payment.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -13,8 +14,8 @@ import html2canvas from 'html2canvas';
   template: `
     <div class="invoice-container">
       <div class="no-print actions">
-        <button class="btn-secondary" (click)="goBack()">← Back to Order</button>
-        <div class="print-actions">
+        <button class="btn-secondary" (click)="goBack()" *ngIf="!isPublicView">← Back to Order</button>
+        <div class="print-actions" [class.center-actions]="isPublicView">
           <button class="btn-primary" (click)="downloadPdf()">⬇ Download PDF</button>
           <button class="btn-primary" (click)="printInvoice()">🖨 Print Invoice</button>
         </div>
@@ -77,7 +78,10 @@ import html2canvas from 'html2canvas';
           <tbody>
             <tr *ngFor="let item of order.order_items; let i = index">
               <td>{{ i + 1 }}</td>
-              <td>{{ item.product_type }}</td>
+              <td>
+                {{ item.product_type }}
+                <span *ngIf="item.dress_type" class="dress-type-badge">{{ item.dress_type }}</span>
+              </td>
               <td *ngIf="order.order_type === 'Customer Order'">{{ item.fabric_details || '-' }}</td>
               <td *ngIf="order.order_type === 'Customer Order'">
                 <div *ngIf="item.dye_color && item.dye_color.length > 0" class="colors-list">
@@ -111,6 +115,28 @@ import html2canvas from 'html2canvas';
 
         <div class="payment-section">
           <h3>Payment Information</h3>
+          
+          <!-- Payment History Table -->
+          <div class="payment-history-table" *ngIf="paymentRecords.length > 0">
+            <h4>Payment History</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Method</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let payment of paymentRecords">
+                  <td>{{ payment.payment_date | date:'dd MMM yyyy' }}</td>
+                  <td>{{ payment.payment_method || '-' }}</td>
+                  <td>Rs. {{ payment.amount }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <div class="payment-details">
             <div class="payment-row">
               <span>Amount Paid:</span>
@@ -360,6 +386,56 @@ import html2canvas from 'html2canvas';
       gap: 0.5rem;
     }
 
+    .dress-type-badge {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.15rem 0.5rem;
+      background: #edf2f7;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .payment-history-table {
+      margin-bottom: 1.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .payment-history-table h4 {
+      margin: 0;
+      padding: 0.5rem 1rem;
+      background: #f7fafc;
+      font-size: 0.9rem;
+      color: #4a5568;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .payment-history-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .payment-history-table th,
+    .payment-history-table td {
+      padding: 0.5rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .payment-history-table th {
+      background: #fff;
+      font-weight: 600;
+      color: #718096;
+    }
+
+    .payment-history-table tr:last-child td {
+      border-bottom: none;
+    }
+
     .payment-row {
       display: flex;
       justify-content: space-between;
@@ -454,19 +530,29 @@ import html2canvas from 'html2canvas';
         padding: 0.5rem;
       }
     }
+
+    .center-actions {
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      width: 100%;
   `]
 })
 export class InvoiceComponent implements OnInit {
   order: OrderWithDetails | null = null;
+  paymentRecords: PaymentRecord[] = [];
   loading = true;
+  isPublicView = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private paymentService: PaymentService
   ) {}
 
   async ngOnInit() {
+    this.isPublicView = this.router.url.includes('/invoice/');
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       await this.loadOrder(id);
@@ -479,6 +565,8 @@ export class InvoiceComponent implements OnInit {
       const orderData = await this.orderService.getOrder(id);
       if (orderData) {
         this.order = orderData;
+        // Load payment records
+        this.paymentRecords = await this.paymentService.getPaymentsByOrder(id);
       }
     } catch (err) {
       console.error('Failed to load order:', err);
