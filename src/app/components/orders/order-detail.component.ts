@@ -156,8 +156,9 @@ import Swal from 'sweetalert2';
                     <option value="">Select Dress Type</option>
                     <option value="Saree">Saree</option>
                     <option value="Overcoat">Overcoat</option>
-                    <option value="2 Pc">2 Pc</option>
                     <option value="1 Pc">1 Pc</option>
+                    <option value="2 Pc">2 Pc</option>
+                    <option value="3 Pc">3 Pc</option>
                   </select>
                 </div>
 
@@ -1518,38 +1519,52 @@ export class OrderDetailComponent implements OnInit {
       return;
     }
 
-    // Validate that order is saved before adding payment
-    if (!this.order.id) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Order Not Saved',
-        text: 'Please save the order first before adding payment records.'
-      });
-      return;
-    }
-
     try {
-      if (this.editingPaymentId) {
-        // Update existing
-        await this.paymentService.updatePayment(this.editingPaymentId, this.newPayment);
-      } else {
-        // Create new
-        await this.paymentService.createPayment({
-          ...this.newPayment,
-          order_id: this.order.id
-        });
-      }
-
-      // Reload payments to recalculate totals
-      await this.loadPaymentRecords(this.order.id!);
-
-      // Update Order in DB with new totals
+      // For existing orders, save to database
       if (this.order.id) {
+        if (this.editingPaymentId) {
+          // Update existing payment
+          await this.paymentService.updatePayment(this.editingPaymentId, this.newPayment);
+        } else {
+          // Create new payment
+          await this.paymentService.createPayment({
+            ...this.newPayment,
+            order_id: this.order.id
+          });
+        }
+
+        // Reload payments to recalculate totals
+        await this.loadPaymentRecords(this.order.id!);
+
+        // Update Order in DB with new totals
         await this.orderService.updateOrder(this.order.id, {
           amount_paid: this.order.amount_paid,
           amount_remaining: this.order.amount_remaining,
           payment_status: this.order.payment_status
         });
+      } else {
+        // For new orders, store payment temporarily in paymentRecords array
+        if (this.editingPaymentId) {
+          // Update existing temporary payment
+          const index = this.paymentRecords.findIndex(p => p.id === this.editingPaymentId);
+          if (index !== -1) {
+            this.paymentRecords[index] = { ...this.paymentRecords[index], ...this.newPayment };
+          }
+        } else {
+          // Add new temporary payment with a temporary ID
+          const tempPayment: PaymentRecord = {
+            id: 'temp_' + Date.now(),
+            order_id: '',  // Will be set when order is saved
+            payment_date: this.newPayment.payment_date!,
+            amount: this.newPayment.amount!,
+            payment_method: this.newPayment.payment_method,
+            notes: this.newPayment.notes
+          };
+          this.paymentRecords.push(tempPayment);
+        }
+
+        // Recalculate totals based on temporary payments
+        this.calculateTotalsFromPayments();
       }
 
       this.closePaymentModal();
@@ -1583,18 +1598,30 @@ export class OrderDetailComponent implements OnInit {
 
     if (result.isConfirmed) {
       try {
-        await this.paymentService.deletePayment(id);
-        
-        // Reload payments to recalculate totals
-        await this.loadPaymentRecords(this.order.id!);
-        
-        // Update Order in DB with new totals
-        if (this.order.id) {
-          await this.orderService.updateOrder(this.order.id, {
-            amount_paid: this.order.amount_paid,
-            amount_remaining: this.order.amount_remaining,
-            payment_status: this.order.payment_status
-          });
+        // Check if this is a temporary payment (for new orders)
+        if (id.startsWith('temp_')) {
+          // Remove from local array
+          const index = this.paymentRecords.findIndex(p => p.id === id);
+          if (index !== -1) {
+            this.paymentRecords.splice(index, 1);
+          }
+          // Recalculate totals
+          this.calculateTotalsFromPayments();
+        } else {
+          // Delete from database (for existing orders)
+          await this.paymentService.deletePayment(id);
+          
+          // Reload payments to recalculate totals
+          await this.loadPaymentRecords(this.order.id!);
+          
+          // Update Order in DB with new totals
+          if (this.order.id) {
+            await this.orderService.updateOrder(this.order.id, {
+              amount_paid: this.order.amount_paid,
+              amount_remaining: this.order.amount_remaining,
+              payment_status: this.order.payment_status
+            });
+          }
         }
         
         Swal.fire({
@@ -2108,6 +2135,26 @@ export class OrderDetailComponent implements OnInit {
           ...this.deliveryCost,
           order_id: orderId
         });
+      }
+
+      // Save payment records (including temporary ones for new orders)
+      if (this.paymentRecords.length > 0) {
+        console.log('Saving payment records...');
+        for (const payment of this.paymentRecords) {
+          // Check if this is a temporary payment (starts with 'temp_')
+          if (payment.id.startsWith('temp_')) {
+            // Create new payment record in database
+            await this.paymentService.createPayment({
+              payment_date: payment.payment_date,
+              amount: payment.amount,
+              payment_method: payment.payment_method,
+              notes: payment.notes,
+              order_id: orderId
+            });
+          }
+          // Existing payments are already in database, no need to update
+        }
+        console.log('Payment records saved successfully');
       }
 
       // Show success message and navigate

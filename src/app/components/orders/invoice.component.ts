@@ -16,7 +16,9 @@ import html2canvas from 'html2canvas';
       <div class="no-print actions">
         <button class="btn-secondary" (click)="goBack()" *ngIf="!isPublicView">← Back to Order</button>
         <div class="print-actions" [class.center-actions]="isPublicView">
-          <button class="btn-primary" (click)="downloadPdf()">⬇ Download PDF</button>
+          <button class="btn-primary" (click)="downloadPdf()" [disabled]="isGeneratingPdf">
+            {{ isGeneratingPdf ? '⏳ Generating...' : '⬇ Download PDF' }}
+          </button>
           <button class="btn-primary" (click)="printInvoice()">🖨 Print Invoice</button>
         </div>
       </div>
@@ -363,7 +365,7 @@ import html2canvas from 'html2canvas';
       color: white;
       font-weight: 600;
       font-size: 1.25rem;
-      margin-top: 0.5rem;
+      margin-top: 2rem;
       border-radius: 8px;
     }
 
@@ -536,6 +538,7 @@ import html2canvas from 'html2canvas';
       display: flex;
       justify-content: center;
       width: 100%;
+    }
   `]
 })
 export class InvoiceComponent implements OnInit {
@@ -579,7 +582,12 @@ export class InvoiceComponent implements OnInit {
 
   getGrandTotal(): number {
     const subtotal = this.order?.total_amount || 0;
-    const delivery = this.order?.delivery_cost?.delivery_cost || 0;
+    
+    let delivery = 0;
+    if (this.order?.delivery_cost?.delivery_cost) {
+      delivery = Number(this.order.delivery_cost.delivery_cost) || 0;
+    }
+    
     return subtotal + delivery;
   }
 
@@ -596,14 +604,23 @@ export class InvoiceComponent implements OnInit {
     window.print();
   }
 
+  isGeneratingPdf = false;
+
   async downloadPdf() {
+    if (this.isGeneratingPdf) return;
+    
     const element = document.querySelector('.invoice') as HTMLElement;
-    if (!element) return;
+    if (!element) {
+      alert('Invoice element not found. Please ensure the invoice is visible.');
+      return;
+    }
+
+    this.isGeneratingPdf = true;
 
     try {
       // Optimized settings for better quality and smaller file size
       const canvas = await html2canvas(element, {
-        scale: 2.5,              // Higher scale for better quality
+        scale: 2.5,
         logging: false,
         useCORS: true,
         backgroundColor: '#ffffff',
@@ -621,7 +638,6 @@ export class InvoiceComponent implements OnInit {
       let heightLeft = imgHeight;
       let position = 0;
       
-      // Use JPEG with quality 0.95 for much smaller file size
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
@@ -634,12 +650,29 @@ export class InvoiceComponent implements OnInit {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`invoice-${this.order?.order_number || 'download'}.pdf`);
+      // Sanitize filename
+      const orderNum = this.order?.order_number || 'download';
+      const safeOrderNum = orderNum.replace(/[\/\\?%*:|"<>]/g, '-');
+      const fileName = `invoice-${safeOrderNum}.pdf`;
+
+      // 1. Try to open in new tab so user sees it immediately
+      try {
+        const blob = pdf.output('blob');
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } catch (e) {
+        console.warn('Failed to open PDF in new tab', e);
+      }
+
+      // 2. Trigger standard download
+      pdf.save(fileName);
       
       console.log('PDF generated successfully');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert('Failed to generate PDF: ' + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      this.isGeneratingPdf = false;
     }
   }
 
